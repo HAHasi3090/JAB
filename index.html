@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <title>বাকির হিসাব</title>
+  <meta name="theme-color" content="#4CAF50" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #d9fdd3; /* হালকা সবুজ ব্যাকগ্রাউন্ড */
+      text-align: center;
+      padding: 30px;
+    }
+    .card {
+      background: white;
+      max-width: 420px;
+      margin: auto;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.15);
+    }
+    input, select, button {
+      margin: 10px 0;
+      padding: 10px;
+      width: 90%;
+      font-size: 16px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #388E3C;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+    }
+    th {
+      background: #a5d6a7;
+    }
+    #appSection { display: none; }
+  </style>
+</head>
+<body>
+
+<div id="loginSection" class="card">
+  <h3>পাসওয়ার্ড দিন</h3>
+  <input type="password" id="passwordInput" placeholder="পাসওয়ার্ড লিখুন" />
+  <button onclick="checkPassword()">প্রবেশ করুন</button>
+</div>
+
+<div id="appSection" class="card">
+  <h2>বাকির হিসাব</h2>
+  <input type="text" id="person" placeholder="নাম লিখুন" />
+  <input type="text" id="number" placeholder="নম্বর লিখুন" />
+  <select id="status">
+    <option value="দেয়">আমাকে টাকা দেয়</option>
+    <option value="নেয়">আমি টাকা দিয়েছি</option>
+  </select>
+  <input type="number" id="amount" placeholder="পরিমাণ" />
+  <button onclick="addDue()">যোগ করো</button>
+
+  <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="নাম বা নম্বর লিখে খুঁজুন" />
+
+  <table>
+    <thead>
+      <tr><th>নাম</th><th>নম্বর</th><th>অবস্থা</th><th>পরিমাণ</th></tr>
+    </thead>
+    <tbody id="dueList"></tbody>
+  </table>
+
+  <h3>মোট আমাকে দিতে হবে: <span id="totalGive">0</span> টাকা</h3>
+  <h3>মোট আমি পাবো: <span id="totalGet">0</span> টাকা</h3>
+
+  <hr /><br />
+  <h4>অতিরিক্ত হিসাব</h4>
+  <input type="number" id="adjustAmount" placeholder="পরিমাণ লিখুন" />
+  <select id="adjustType">
+    <option value="যোগ">যোগ করো</option>
+    <option value="বিয়োগ">বিয়োগ করো</option>
+  </select>
+  <select id="adjustTarget">
+    <option value="get">আমি পাবো</option>
+    <option value="give">আমি দিবো</option>
+  </select>
+  <button onclick="adjustTotal()">হিসাবে পরিবর্তন করো</button>
+
+  <p style="margin-top: 40px; font-size: 12px; color: #666;">
+    created by Jubayer Ahmed Bhuiyan
+  </p>
+</div>
+
+<script>
+  let totalGive = 0;
+  let totalGet = 0;
+
+  function checkPassword() {
+    const password = document.getElementById("passwordInput").value;
+    if (password === "৩২৫৭") {
+      document.getElementById("loginSection").style.display = "none";
+      document.getElementById("appSection").style.display = "block";
+    } else {
+      alert("ভুল পাসওয়ার্ড!");
+    }
+  }
+
+  function addDue() {
+    const name = document.getElementById("person").value.trim();
+    const number = document.getElementById("number").value.trim();
+    const status = document.getElementById("status").value;
+    const amount = parseFloat(document.getElementById("amount").value);
+
+    if (!name || !number || isNaN(amount) || amount <= 0) {
+      alert("সব তথ্য দিন");
+      return;
+    }
+
+    const row = `<tr><td>${name}</td><td>${number}</td><td>${status}</td><td>${amount}</td></tr>`;
+    document.getElementById("dueList").innerHTML += row;
+
+    if (status === "নেয়") totalGive += amount;
+    else totalGet += amount;
+
+    updateTotals();
+
+    document.getElementById("person").value = "";
+    document.getElementById("number").value = "";
+    document.getElementById("amount").value = "";
+  }
+
+  function updateTotals() {
+    document.getElementById("totalGive").textContent = totalGive;
+    document.getElementById("totalGet").textContent = totalGet;
+  }
+
+  function adjustTotal() {
+    const amount = parseFloat(document.getElementById("adjustAmount").value);
+    const type = document.getElementById("adjustType").value;
+    const target = document.getElementById("adjustTarget").value;
+
+    if (isNaN(amount) || amount <= 0) {
+      alert("সঠিক পরিমাণ দিন");
+      return;
+    }
+
+    if (target === "get") {
+      totalGet = type === "যোগ" ? totalGet + amount : totalGet - amount;
+    } else {
+      totalGive = type === "যোগ" ? totalGive + amount : totalGive - amount;
+    }
+
+    updateTotals();
+    document.getElementById("adjustAmount").value = "";
+  }
+
+  function searchTable() {
+    const input = document.getElementById("searchInput").value.toLowerCase();
+    const rows = document.getElementById("dueList").getElementsByTagName("tr");
+
+    for (let row of rows) {
+      const nameCell = row.cells[0].textContent.toLowerCase();
+      const numberCell = row.cells[1].textContent.toLowerCase();
+      if (nameCell.includes(input) || numberCell.includes(input)) {
+        row.style.display = "";
+      } else {
+        row.style.display = "none";
+      }
+    }
+  }
+</script>
+</body>
+</html>
